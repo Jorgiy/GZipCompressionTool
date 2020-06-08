@@ -1,6 +1,9 @@
 ﻿using GZipCompressionTool.Core.Interfaces;
 using GZipCompressionTool.Core.Models;
+using System;
 using System.IO;
+using System.IO.Compression;
+using static GZipCompressionTool.Core.Models.Constants;
 
 namespace GZipCompressionTool.Core
 {
@@ -27,6 +30,24 @@ namespace GZipCompressionTool.Core
             var executionCOntext = new ExecutionContext(inputStream, outputStream) { Chunk = new Chunk() };
 
             _gZipIO.SetExecutionContext(executionCOntext);
+
+
+        }
+
+        private void BeginReadChunk(CompressionOptions compressionOptions, ExecutionContext executionContext)
+        {
+            var chunkId = _compressionSynchronizationContext.GetChunkId();
+            var chunkSize = compressionOptions.ReadBufferSize;
+
+            if (compressionOptions.CompressionMode == CompressionMode.Decompress)
+            {
+                var chunkSizeBuffer = new byte[ChunkHeaderSize];
+                _gZipIO.GetCompressedChunkSize(ChunkHeaderSize, GetCompressedChunkSize, chunkSizeBuffer);
+            }
+        }
+
+        private void GetCompressedChunkSize(IAsyncResult asyncResult)
+        {
         }
     }
 }

@@ -13,6 +13,11 @@ namespace GZipCompressionTool.Core
             return _executionContext.InputStream.BeginRead(_executionContext.Chunk.Payload, 0, bufferSize, asyncCallback, _executionContext);
         }
 
+        public IAsyncResult GetCompressedChunkSize(int headerSize, AsyncCallback asyncCallback, byte[] chunkSize)
+        {
+            return _executionContext.InputStream.BeginRead(chunkSize, 0, headerSize, asyncCallback, _executionContext);
+        }
+
         public void WriteGZip(CompressionMode compressionMode, AsyncCallback asyncCallback)
         {
             byte[] payload;
