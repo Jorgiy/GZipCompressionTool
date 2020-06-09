@@ -1,15 +1,17 @@
 ﻿using GZipCompressionTool.Core.Interfaces;
 using GZipCompressionTool.Core.Models;
 using System.IO;
+using System.IO.Compression;
 
 namespace GZipCompressionTool.Core
 {
     public class ExecutionContext : IExecutionContext
     {
-        public ExecutionContext(Stream inputStream, Stream outputStream)
+        public ExecutionContext(Stream inputStream, Stream outputStream, CompressionMode compressionMode)
         {
             InputStream = inputStream;
             OutputStream = outputStream;
+            CompressionMode = compressionMode;
         }
 
         public Stream InputStream { get; }
@@ -17,5 +19,11 @@ namespace GZipCompressionTool.Core
         public Stream OutputStream { get; }
 
         public Chunk Chunk { get; set; }
+
+        public int ChunkSize { get; set; }
+
+        public CompressionMode CompressionMode { get; set; }
+
+        public ICompressionSynchronizationContext CompressionSynchronizationContext { get; set; }
     }
 }

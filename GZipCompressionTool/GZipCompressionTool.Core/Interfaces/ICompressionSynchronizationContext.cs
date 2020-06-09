@@ -1,14 +1,20 @@
-﻿namespace GZipCompressionTool.Core.Interfaces
+﻿using System;
+
+namespace GZipCompressionTool.Core.Interfaces
 {
     public interface ICompressionSynchronizationContext
     {
         long GetChunkId();
 
-        void OnRead();
+        void OnReadStarted();
 
-        void OnWrite(long chunkId);
+        void OnPreWrite(long chunkId);
 
-        void OnWriteFinished();
+        void OnWriteStarted();
+
+        void OnThreadFinish();
+
+        void OnException(Exception exception);
 
         void WaitCompletion();
     }

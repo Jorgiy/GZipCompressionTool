@@ -6,6 +6,6 @@ namespace GZipCompressionTool.Core.Interfaces
     {        
         IAsyncResult ReadGZip(int bufferSize, AsyncCallback asyncCallback);
 
-        IAsyncResult GetCompressedChunkSize(int headerSize, AsyncCallback asyncCallback, byte[] chunkSize);
+        int GetCompressedChunkSize(int headerSize, byte[] chunkSize);
     }
 }

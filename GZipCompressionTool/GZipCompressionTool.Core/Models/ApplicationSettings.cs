@@ -11,8 +11,8 @@ namespace GZipCompressionTool.Core.Models
 
         public string OutputFilePath { get; set; }
 
-        public int ChunkSize { get; } = Constants.ChunkSize;
+        public int ChunkSize { get; set; }
 
-        public int ProcessorsCount { get; } = Environment.ProcessorCount;
+        public int ProcessorsCount { get; set; }
     }
 }

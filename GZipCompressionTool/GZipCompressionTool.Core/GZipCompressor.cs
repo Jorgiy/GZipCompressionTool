@@ -23,7 +23,6 @@ namespace GZipCompressionTool.Core
         public byte[] Decompress(byte[] input)
         {
             var decompressionResult = new byte[DecompressionBufferSize];
-            int countRead;
 
             using (var outputStream = new MemoryStream())
             {
@@ -31,11 +30,12 @@ namespace GZipCompressionTool.Core
                 {
                     using (var gzipStream = new GZipStream(inputStream, CompressionMode.Decompress))
                     {
+                        int countRead;
                         while ((countRead = gzipStream.Read(decompressionResult, 0, decompressionResult.Length)) != 0)
                         {
                             Array.Resize(ref decompressionResult, countRead);
                             outputStream.Write(decompressionResult, 0, countRead);
-                        }                        
+                        }
                     }
                 }
 

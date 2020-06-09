@@ -1,4 +1,6 @@
-﻿using GZipCompressionTool.Core.Interfaces;
+﻿using System;
+using System.Collections.Generic;
+using GZipCompressionTool.Core.Interfaces;
 using System.Threading;
 
 namespace GZipCompressionTool.Core
@@ -7,44 +9,69 @@ namespace GZipCompressionTool.Core
     {
         public CompressionSynchronizationContext(int threadsCount)
         {
-            _threadsRunnigCount = threadsCount;
+            _threadsRunningCount = threadsCount;
         }
 
-        private EventWaitHandle _readHandle => new EventWaitHandle(false, EventResetMode.AutoReset);
+        private EventWaitHandle _readHandle => new EventWaitHandle(true, EventResetMode.AutoReset);
 
-        private EventWaitHandle _writeHandle => new EventWaitHandle(false, EventResetMode.ManualReset);
+        private EventWaitHandle _writeHandle => new EventWaitHandle(true, EventResetMode.ManualReset);
 
         private EventWaitHandle _finishedHandle => new EventWaitHandle(false, EventResetMode.ManualReset);
 
-        private long _readCount { get; set; }
+        private ICollection<Exception> Exceptions { get; } = new List<Exception>();
 
-        private long _writeCount { get; set; }
+        private long _readCount;
 
-        private int _threadsRunnigCount { get; set; }
+        private long _writeCount = 1;
+
+        private int _threadsRunningCount;
 
         public long GetChunkId()
         {
-            throw new System.NotImplementedException();
+            _readHandle.WaitOne();
+            return Interlocked.Increment(ref _readCount);
         }
 
-        public void OnRead()
+        public void OnReadStarted()
         {
-            throw new System.NotImplementedException();
+            _readHandle.Set();
         }
 
-        public void OnWrite(long chunkId)
+        public void OnPreWrite(long chunkId)
         {
-            throw new System.NotImplementedException();
+            if (chunkId != _writeCount)
+            {
+                _writeHandle.WaitOne();
+            }
         }
 
-        public void OnWriteFinished()
+        public void OnWriteStarted()
         {
-            throw new System.NotImplementedException();
+            Interlocked.Increment(ref _writeCount);
+            _writeHandle.Set();
+        }
+        
+        public void OnThreadFinish()
+        {
+            Interlocked.Decrement(ref _threadsRunningCount);
+            _readHandle.Set();
+
+            if (_threadsRunningCount == 0)
+            {
+                _finishedHandle.Set();
+            }
+        }
+
+        public void OnException(Exception exception)
+        {
+            _readHandle.Reset();
+            _writeHandle.Reset();
+            Exceptions.Add(exception);
         }
 
         public void WaitCompletion()
         {
-            throw new System.NotImplementedException();
+            _finishedHandle.WaitOne();
         }
     }
 }
