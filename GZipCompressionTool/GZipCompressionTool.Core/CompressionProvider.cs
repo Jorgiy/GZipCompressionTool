@@ -13,16 +13,13 @@ namespace GZipCompressionTool.Core
 
         private readonly ICompressionSynchronizationContext _compressionSynchronizationContext;
 
-        private readonly IGZipIO _gZipIo;
-
         public CompressionProvider(
-            IGZipCompressor gZipCompressor, 
+            IGZipCompressor gZipCompressor,
             ICompressionSynchronizationContext compressionSynchronizationContext,
             IGZipIO gZipIo)
         {
             _compressionSynchronizationContext = compressionSynchronizationContext;
             _gZipCompressor = gZipCompressor;
-            _gZipIo = gZipIo;
         }
 
         public void Execute(Stream inputStream, Stream outputStream, CompressionOptions compressionOptions)
@@ -32,24 +29,23 @@ namespace GZipCompressionTool.Core
                     outputStream, 
                     compressionOptions.CompressionMode)
             {
-                Chunk = new Chunk(), 
-                ChunkSize = compressionOptions.ReadBufferSize
+                ChunkSize = compressionOptions.ReadBufferSize,
+                CompressionSynchronizationContext = _compressionSynchronizationContext
             };
-
-            _gZipIo.SetExecutionContext(executionContext);
 
             BeginReadChunk(executionContext);
         }
 
         private void BeginReadChunk(IExecutionContext executionContext)
         {
+            executionContext.Chunk = new Chunk();
             var chunkId = _compressionSynchronizationContext.GetChunkId();
             var chunkSize = executionContext.ChunkSize;
 
             if (executionContext.CompressionMode == CompressionMode.Decompress)
             {
                 var chunkSizeBuffer = new byte[ChunkHeaderSize];
-                var bufferSizeBytesRead = _gZipIo.GetCompressedChunkSize(ChunkHeaderSize, chunkSizeBuffer);
+                var bufferSizeBytesRead = executionContext.GZipIo.GetCompressedChunkSize(ChunkHeaderSize, chunkSizeBuffer);
                 if (bufferSizeBytesRead == 0)
                 {
                     executionContext.CompressionSynchronizationContext.OnThreadFinish();
@@ -62,19 +58,20 @@ namespace GZipCompressionTool.Core
             executionContext.Chunk.Id = chunkId;
             executionContext.Chunk.Payload = new byte[chunkSize];
 
-            _gZipIo.ReadGZip(chunkSize, FinishRead);
-            _compressionSynchronizationContext.OnReadStarted();
+            executionContext.GZipIo.ReadGZip(chunkSize, FinishRead);
         }
 
         private void FinishRead(IAsyncResult asyncResult)
         {
-            var executionContext = asyncResult as IExecutionContext;
+            var executionContext = asyncResult.AsyncState as IExecutionContext;
             var bytesRead = executionContext.InputStream.EndRead(asyncResult);
+            _compressionSynchronizationContext.OnReadStarted();
 
             var readPayload = executionContext.Chunk.Payload;
             if (bytesRead < executionContext.Chunk.Payload.Length)
             {
                 Array.Resize(ref readPayload, bytesRead);
+                executionContext.Chunk.Payload = readPayload;
             }
 
             if (bytesRead == 0)
@@ -93,15 +90,15 @@ namespace GZipCompressionTool.Core
         private void BeginWrite(IExecutionContext executionContext)
         {
             executionContext.CompressionSynchronizationContext.OnPreWrite(executionContext.Chunk.Id);
-            _gZipIo.WriteGZip(executionContext.CompressionMode, FinishWrite);
-            executionContext.CompressionSynchronizationContext.OnWriteStarted();
+            executionContext.GZipIo.WriteGZip(executionContext.CompressionMode, FinishWrite);
         }
 
         private void FinishWrite(IAsyncResult asyncResult)
         {
-            var executionContext = asyncResult as IExecutionContext;
+            var executionContext = asyncResult.AsyncState as IExecutionContext;
             executionContext.OutputStream.EndWrite(asyncResult);
-            executionContext.Chunk = new Chunk();
+            executionContext.CompressionSynchronizationContext.OnWriteStarted();
+            executionContext.CompressionSynchronizationContext.OnWriteFinish(executionContext.Chunk.Id);
             BeginReadChunk(executionContext);
         }
     }

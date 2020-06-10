@@ -6,6 +6,6 @@
 
         public const int DecompressionBufferSize = 1024 * 1024;
 
-        public const int ChunkSize = 1024 * 1024;
+        public const int ChunkSize = 4 * 1024 * 1024;
     }
 }

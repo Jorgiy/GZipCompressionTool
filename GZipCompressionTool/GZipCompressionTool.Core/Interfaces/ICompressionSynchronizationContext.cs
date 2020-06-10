@@ -12,6 +12,8 @@ namespace GZipCompressionTool.Core.Interfaces
 
         void OnWriteStarted();
 
+        void OnWriteFinish(long chunkId);
+
         void OnThreadFinish();
 
         void OnException(Exception exception);

@@ -12,24 +12,30 @@ namespace GZipCompressionTool.Core
             _threadsRunningCount = threadsCount;
         }
 
-        private EventWaitHandle _readHandle => new EventWaitHandle(true, EventResetMode.AutoReset);
+        private readonly EventWaitHandle _readHandle = new EventWaitHandle(true, EventResetMode.AutoReset);
 
-        private EventWaitHandle _writeHandle => new EventWaitHandle(true, EventResetMode.ManualReset);
+        private readonly EventWaitHandle _writeHandle = new EventWaitHandle(true, EventResetMode.ManualReset);
 
-        private EventWaitHandle _finishedHandle => new EventWaitHandle(false, EventResetMode.ManualReset);
+        private readonly EventWaitHandle _chunkWriteHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
 
-        private ICollection<Exception> Exceptions { get; } = new List<Exception>();
+        private readonly EventWaitHandle _allChunksAreReadHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
 
-        private long _readCount;
+        private long _lastChunkId;
 
         private long _writeCount = 1;
 
+        private long _lastWrittenChunk;
+
         private int _threadsRunningCount;
+
+        private int _chunksToWrite;
+
+        public ICollection<Exception> Exceptions { get; } = new List<Exception>();
 
         public long GetChunkId()
         {
             _readHandle.WaitOne();
-            return Interlocked.Increment(ref _readCount);
+            return Interlocked.Increment(ref _lastChunkId);
         }
 
         public void OnReadStarted()
@@ -39,9 +45,11 @@ namespace GZipCompressionTool.Core
 
         public void OnPreWrite(long chunkId)
         {
-            if (chunkId != _writeCount)
+            Interlocked.Increment(ref _chunksToWrite);
+
+            while (chunkId != _writeCount)
             {
-                _writeHandle.WaitOne();
+                _writeHandle.WaitOne(100);
             }
         }
 
@@ -50,7 +58,13 @@ namespace GZipCompressionTool.Core
             Interlocked.Increment(ref _writeCount);
             _writeHandle.Set();
         }
-        
+
+        public void OnWriteFinish(long chunkId)
+        {
+            Interlocked.Increment(ref _lastWrittenChunk);
+            _chunkWriteHandle.Set();
+        }
+
         public void OnThreadFinish()
         {
             Interlocked.Decrement(ref _threadsRunningCount);
@@ -58,7 +72,7 @@ namespace GZipCompressionTool.Core
 
             if (_threadsRunningCount == 0)
             {
-                _finishedHandle.Set();
+                _allChunksAreReadHandle.Set();
             }
         }
 
@@ -71,7 +85,12 @@ namespace GZipCompressionTool.Core
 
         public void WaitCompletion()
         {
-            _finishedHandle.WaitOne();
+            _allChunksAreReadHandle.WaitOne();
+
+            while (_chunksToWrite != _lastWrittenChunk)
+            {
+                _chunkWriteHandle.WaitOne(100);
+            }
         }
     }
 }

@@ -14,6 +14,8 @@ namespace GZipCompressionTool.Core.Interfaces
 
         int ChunkSize { get; set; }
 
+        GZipIO GZipIo { get; set; }
+
         CompressionMode CompressionMode { get; set; }
 
         ICompressionSynchronizationContext CompressionSynchronizationContext { get; set; }

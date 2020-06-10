@@ -1,4 +1,6 @@
-﻿using GZipCompressionTool.Core;
+﻿using System;
+using System.Diagnostics;
+using GZipCompressionTool.Core;
 using GZipCompressionTool.Core.Models;
 using System.IO;
 
@@ -16,6 +18,9 @@ namespace GZipCompressionTool
             var compressionProvider = new CompressionProvider(gZipCompressor, synchronizationContext, gZipIO);
             var threadPoolDispatcher = new ThreadPoolDispatcher();
 
+            var stopWatch = new Stopwatch();
+            stopWatch.Start();
+
             // application start
             using (var inputFileStream = new FileStream(
                 applicationSettings.InputFilePath,
@@ -27,7 +32,7 @@ namespace GZipCompressionTool
             {
                 using (var outputFileStream = new FileStream(
                     applicationSettings.OutputFilePath,
-                    FileMode.Open,
+                    FileMode.Create,
                     FileAccess.Write,
                     FileShare.Write,
                     applicationSettings.ChunkSize,
@@ -46,11 +51,13 @@ namespace GZipCompressionTool
                     {
                         thread.Start();
                     }
+
+                    // wait for execution
+                    synchronizationContext.WaitCompletion();
+                    stopWatch.Stop();
+                    Console.WriteLine(stopWatch.Elapsed);
                 }
             }
-
-            // wait for execution
-            synchronizationContext.WaitCompletion();
         }
     }
 }
