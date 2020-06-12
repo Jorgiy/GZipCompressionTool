@@ -16,15 +16,11 @@ namespace GZipCompressionTool.Core
 
         private readonly EventWaitHandle _writeHandle = new EventWaitHandle(true, EventResetMode.ManualReset);
 
-        private readonly EventWaitHandle _chunkWriteHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
-
         private readonly EventWaitHandle _allChunksAreReadHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
 
         private long _lastChunkId;
 
         private long _writeCount = 1;
-
-        private long _lastWrittenChunk;
 
         private int _threadsRunningCount;
 
@@ -53,16 +49,10 @@ namespace GZipCompressionTool.Core
             }
         }
 
-        public void OnWriteStarted()
+        public void OnWriteFinish()
         {
             Interlocked.Increment(ref _writeCount);
             _writeHandle.Set();
-        }
-
-        public void OnWriteFinish(long chunkId)
-        {
-            Interlocked.Increment(ref _lastWrittenChunk);
-            _chunkWriteHandle.Set();
         }
 
         public void OnThreadFinish()
@@ -78,18 +68,17 @@ namespace GZipCompressionTool.Core
 
         public void OnException(Exception exception)
         {
-            _readHandle.Reset();
-            _writeHandle.Reset();
             Exceptions.Add(exception);
+            OnThreadFinish();
         }
 
         public void WaitCompletion()
         {
             _allChunksAreReadHandle.WaitOne();
 
-            while (_chunksToWrite != _lastWrittenChunk)
+            while (_chunksToWrite != _writeCount - 1)
             {
-                _chunkWriteHandle.WaitOne(100);
+                _writeHandle.WaitOne(100);
             }
         }
     }

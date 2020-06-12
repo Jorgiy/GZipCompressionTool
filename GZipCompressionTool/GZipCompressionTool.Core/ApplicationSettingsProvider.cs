@@ -16,7 +16,7 @@ namespace GZipCompressionTool.Core
                 OutputFilePath = @"C:\gzip\A.gz",
                 ChunkSize = ChunkSize,
                 CompressionMode = CompressionMode.Compress,
-                ProcessorsCount =  true ? 1 : Environment.ProcessorCount
+                ProcessorsCount =  false ? 1 : Environment.ProcessorCount
             } : new ApplicationSettings
             {
                 InputFilePath = @"C:\gzip\A.gz",

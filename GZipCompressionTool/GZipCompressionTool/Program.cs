@@ -12,10 +12,9 @@ namespace GZipCompressionTool
         {
             // composition root
             var applicationSettings = new ApplicationSettingsProvider().GetApplicationSettings(args);
-            var gZipIO = new GZipIO();
             var gZipCompressor = new GZipCompressor();
             var synchronizationContext = new CompressionSynchronizationContext(applicationSettings.ProcessorsCount);
-            var compressionProvider = new CompressionProvider(gZipCompressor, synchronizationContext, gZipIO);
+            var compressionProvider = new CompressionProvider(gZipCompressor, synchronizationContext);
             var threadPoolDispatcher = new ThreadPoolDispatcher();
 
             var stopWatch = new Stopwatch();

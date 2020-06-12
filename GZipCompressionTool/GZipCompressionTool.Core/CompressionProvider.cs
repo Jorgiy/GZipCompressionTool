@@ -15,8 +15,7 @@ namespace GZipCompressionTool.Core
 
         public CompressionProvider(
             IGZipCompressor gZipCompressor,
-            ICompressionSynchronizationContext compressionSynchronizationContext,
-            IGZipIO gZipIo)
+            ICompressionSynchronizationContext compressionSynchronizationContext)
         {
             _compressionSynchronizationContext = compressionSynchronizationContext;
             _gZipCompressor = gZipCompressor;
@@ -29,10 +28,9 @@ namespace GZipCompressionTool.Core
                     outputStream, 
                     compressionOptions.CompressionMode)
             {
-                ChunkSize = compressionOptions.ReadBufferSize,
-                CompressionSynchronizationContext = _compressionSynchronizationContext
+                ChunkSize = compressionOptions.ReadBufferSize
             };
-
+            
             BeginReadChunk(executionContext);
         }
 
@@ -48,7 +46,7 @@ namespace GZipCompressionTool.Core
                 var bufferSizeBytesRead = executionContext.GZipIo.GetCompressedChunkSize(ChunkHeaderSize, chunkSizeBuffer);
                 if (bufferSizeBytesRead == 0)
                 {
-                    executionContext.CompressionSynchronizationContext.OnThreadFinish();
+                    _compressionSynchronizationContext.OnThreadFinish();
                     return;
                 }
 
@@ -76,7 +74,7 @@ namespace GZipCompressionTool.Core
 
             if (bytesRead == 0)
             {
-                executionContext.CompressionSynchronizationContext.OnThreadFinish();
+                _compressionSynchronizationContext.OnThreadFinish();
                 return;
             }
 
@@ -89,7 +87,7 @@ namespace GZipCompressionTool.Core
 
         private void BeginWrite(IExecutionContext executionContext)
         {
-            executionContext.CompressionSynchronizationContext.OnPreWrite(executionContext.Chunk.Id);
+            _compressionSynchronizationContext.OnPreWrite(executionContext.Chunk.Id);
             executionContext.GZipIo.WriteGZip(executionContext.CompressionMode, FinishWrite);
         }
 
@@ -97,8 +95,7 @@ namespace GZipCompressionTool.Core
         {
             var executionContext = asyncResult.AsyncState as IExecutionContext;
             executionContext.OutputStream.EndWrite(asyncResult);
-            executionContext.CompressionSynchronizationContext.OnWriteStarted();
-            executionContext.CompressionSynchronizationContext.OnWriteFinish(executionContext.Chunk.Id);
+            _compressionSynchronizationContext.OnWriteFinish();
             BeginReadChunk(executionContext);
         }
     }

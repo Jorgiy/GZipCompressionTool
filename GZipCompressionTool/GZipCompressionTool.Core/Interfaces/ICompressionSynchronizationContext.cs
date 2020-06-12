@@ -10,9 +10,7 @@ namespace GZipCompressionTool.Core.Interfaces
 
         void OnPreWrite(long chunkId);
 
-        void OnWriteStarted();
-
-        void OnWriteFinish(long chunkId);
+        void OnWriteFinish();
 
         void OnThreadFinish();
 
