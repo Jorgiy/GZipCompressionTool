@@ -21,13 +21,13 @@ namespace GZipCompressionTool.Core
 
         private readonly EventWaitHandle _errorHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
 
-        private long _lastChunkId;
+        private long _chunkId;
 
-        private long _writeCount = 1;
+        private long _nextToWriteChunkId = 1;
 
         private int _threadsRunningCount;
 
-        private int _chunksToWrite;
+        private int _chunksToWriteCount;
 
         public ICollection<Exception> Exceptions { get; } = new List<Exception>();
 
@@ -39,7 +39,7 @@ namespace GZipCompressionTool.Core
                 AbortCompress();
             }
 
-            return Interlocked.Increment(ref _lastChunkId);
+            return Interlocked.Increment(ref _chunkId);
         }
 
         public void OnReadFinished()
@@ -49,15 +49,15 @@ namespace GZipCompressionTool.Core
 
         public void OnPreWrite(long chunkId)
         {
-            Interlocked.Increment(ref _chunksToWrite);
+            Interlocked.Increment(ref _chunksToWriteCount);
 
-            while (chunkId != _writeCount)
+            while (chunkId != _nextToWriteChunkId)
             {
                 _writeHandle.WaitOne(100);
 
                 if (_errorHandle.WaitOne(0))
                 {
-                    Interlocked.Increment(ref _writeCount);
+                    Interlocked.Increment(ref _nextToWriteChunkId);
                     _writeHandle.Set();
                     AbortCompress();
                 }
@@ -66,7 +66,7 @@ namespace GZipCompressionTool.Core
 
         public void OnWriteFinish()
         {
-            Interlocked.Increment(ref _writeCount);
+            Interlocked.Increment(ref _nextToWriteChunkId);
             _writeHandle.Set();
             _writeHandle.Reset();
         }
@@ -96,9 +96,9 @@ namespace GZipCompressionTool.Core
         {
             _allChunksAreReadHandle.WaitOne();
 
-            while (_chunksToWrite != _writeCount - 1)
+            while (_chunksToWriteCount != _nextToWriteChunkId - 1)
             {
-                if (_errorHandle.WaitOne(100) && _chunksToWrite == _writeCount)
+                if (_errorHandle.WaitOne(100) && _chunksToWriteCount == _nextToWriteChunkId)
                 {
                     return;
                 }

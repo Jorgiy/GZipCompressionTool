@@ -1,10 +1,11 @@
-﻿using GZipCompressionTool.Core.Models;
+﻿using System;
+using GZipCompressionTool.Core.Models;
 using System.IO;
 using System.IO.Compression;
 
 namespace GZipCompressionTool.Core.Interfaces
 {
-    public interface IExecutionContext
+    public interface IExecutionContext : IDisposable
     {
         Stream InputStream { get; }
 

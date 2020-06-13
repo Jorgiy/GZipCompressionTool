@@ -53,6 +53,7 @@ namespace GZipCompressionTool.Core
                 if (bufferSizeBytesRead == 0)
                 {
                     _compressionSynchronizationContext.OnThreadFinish();
+                    executionContext.Dispose();
                     return;
                 }
 
@@ -83,6 +84,7 @@ namespace GZipCompressionTool.Core
             if (bytesRead == 0)
             {
                 _compressionSynchronizationContext.OnThreadFinish();
+                executionContext.Dispose();
                 return;
             }
 

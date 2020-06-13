@@ -10,9 +10,9 @@ namespace GZipCompressionTool.Core
     {
         public ApplicationSettings GetApplicationSettings(string[] args)
         {
-            return true ? new ApplicationSettings
+            return false ? new ApplicationSettings
             {
-                InputFilePath = @"C:\gzip\A.avi",
+                InputFilePath = @"C:\gzip\A.exe",
                 OutputFilePath = @"C:\gzip\A.gz",
                 ChunkSize = ChunkSize,
                 CompressionMode = CompressionMode.Compress,
@@ -20,7 +20,7 @@ namespace GZipCompressionTool.Core
             } : new ApplicationSettings
             {
                 InputFilePath = @"C:\gzip\A.gz",
-                OutputFilePath = @"C:\gzip\A2.avi",
+                OutputFilePath = @"C:\gzip\A2.exe",
                 ChunkSize = ChunkSize,
                 CompressionMode = CompressionMode.Decompress,
                 ProcessorsCount = false ? 1 : Environment.ProcessorCount

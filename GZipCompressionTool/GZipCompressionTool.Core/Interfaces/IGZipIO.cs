@@ -2,6 +2,5 @@
 {
     public interface IGZipIO : IGZipReader, IGZipWriter
     {
-        void SetExecutionContext(IExecutionContext executionContext);
     }
 }

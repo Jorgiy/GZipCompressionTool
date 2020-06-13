@@ -6,7 +6,12 @@ namespace GZipCompressionTool.Core
 {
     public class GZipIO : IGZipIO
     {
-        private IExecutionContext _executionContext;
+        private readonly IExecutionContext _executionContext;
+
+        public GZipIO(IExecutionContext executionContext)
+        {
+            _executionContext = executionContext;
+        }
 
         public IAsyncResult ReadGZip(int bufferSize, AsyncCallback asyncCallback)
         {
@@ -32,11 +37,6 @@ namespace GZipCompressionTool.Core
             }
 
             _executionContext.OutputStream.BeginWrite(payload, 0, payload.Length, asyncCallback, _executionContext);
-        }
-
-        public void SetExecutionContext(IExecutionContext executionContext)
-        {
-            _executionContext = executionContext;
         }
     }
 }
