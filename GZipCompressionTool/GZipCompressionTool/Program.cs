@@ -8,13 +8,14 @@ namespace GZipCompressionTool
 {
     class Program
     {
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
             // composition root
             var applicationSettings = new ApplicationSettingsProvider().GetApplicationSettings(args);
             var gZipCompressor = new GZipCompressor();
             var synchronizationContext = new CompressionSynchronizationContext(applicationSettings.ProcessorsCount);
-            var compressionProvider = new CompressionProvider(gZipCompressor, synchronizationContext);
+            var executionSafeContext = new ExecutionSafeContext(synchronizationContext);
+            var compressionProvider = new CompressionProvider(gZipCompressor, synchronizationContext, executionSafeContext);
             var threadPoolDispatcher = new ThreadPoolDispatcher();
 
             var stopWatch = new Stopwatch();
@@ -57,6 +58,8 @@ namespace GZipCompressionTool
                     Console.WriteLine(stopWatch.Elapsed);
                 }
             }
+
+            return 1;
         }
     }
 }

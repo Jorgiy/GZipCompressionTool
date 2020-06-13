@@ -17,7 +17,5 @@ namespace GZipCompressionTool.Core.Interfaces
         IGZipIO GZipIo { get; set; }
 
         CompressionMode CompressionMode { get; set; }
-
-        IExecutionSafeContext ExecutionSafeContext { get; set; }
     }
 }

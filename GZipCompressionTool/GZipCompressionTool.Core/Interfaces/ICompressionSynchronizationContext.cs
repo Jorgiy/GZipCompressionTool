@@ -6,7 +6,7 @@ namespace GZipCompressionTool.Core.Interfaces
     {
         long GetChunkId();
 
-        void OnReadStarted();
+        void OnReadFinished();
 
         void OnPreWrite(long chunkId);
 
@@ -15,6 +15,8 @@ namespace GZipCompressionTool.Core.Interfaces
         void OnThreadFinish();
 
         void OnException(Exception exception);
+
+        bool ExceptionsOccured { get; }
 
         void WaitCompletion();
     }

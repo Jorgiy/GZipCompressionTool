@@ -1,27 +1,43 @@
 ﻿using System;
+using System.IO;
 using GZipCompressionTool.Core.Interfaces;
+using GZipCompressionTool.Core.Models;
 
 namespace GZipCompressionTool.Core
 {
-    class ExecutionSafeContext : IExecutionSafeContext
+    public class ExecutionSafeContext : IExecutionSafeContext
     {
-        private Action<Exception> _errorHandlingAction;
+        private readonly ICompressionSynchronizationContext _compressionSynchronizationContext;
 
-        public void ExecuteSafe(Action action)
+        public ExecutionSafeContext(ICompressionSynchronizationContext compressionSynchronizationContext)
+        {
+            _compressionSynchronizationContext = compressionSynchronizationContext;
+        }
+
+        public void ExecuteSafe(Action action, Action<Exception> errorAction)
         {
             try
             {
+                if (_compressionSynchronizationContext.ExceptionsOccured)
+                {
+                    _compressionSynchronizationContext.OnThreadFinish();
+                    return;
+                }
+
                 action?.Invoke();
+            }
+            catch (CompressAbortedException)
+            {
+                _compressionSynchronizationContext.OnThreadFinish();
+            }
+            catch (IOException ioException)
+            {
+                errorAction?.Invoke(new UserException("", ioException));
             }
             catch (Exception exception)
             {
-                _errorHandlingAction?.Invoke(exception);
+                errorAction?.Invoke(new UserException("", exception));
             }
-        }
-
-        public void SetErrorHandlingAction(Action<Exception> action)
-        {
-            _errorHandlingAction = action;
         }
     }
 }

@@ -13,12 +13,18 @@ namespace GZipCompressionTool.Core
 
         private readonly ICompressionSynchronizationContext _compressionSynchronizationContext;
 
+        private readonly IExecutionSafeContext _executionSafeContext;
+
+        private Action<Exception> ErrorAction => _compressionSynchronizationContext.OnException;
+
         public CompressionProvider(
             IGZipCompressor gZipCompressor,
-            ICompressionSynchronizationContext compressionSynchronizationContext)
+            ICompressionSynchronizationContext compressionSynchronizationContext,
+            IExecutionSafeContext executionSafeContext)
         {
             _compressionSynchronizationContext = compressionSynchronizationContext;
             _gZipCompressor = gZipCompressor;
+            _executionSafeContext = executionSafeContext;
         }
 
         public void Execute(Stream inputStream, Stream outputStream, CompressionOptions compressionOptions)
@@ -31,7 +37,7 @@ namespace GZipCompressionTool.Core
                 ChunkSize = compressionOptions.ReadBufferSize
             };
             
-            BeginReadChunk(executionContext);
+            _executionSafeContext.ExecuteSafe(() => BeginReadChunk(executionContext), ErrorAction);
         }
 
         private void BeginReadChunk(IExecutionContext executionContext)
@@ -56,14 +62,16 @@ namespace GZipCompressionTool.Core
             executionContext.Chunk.Id = chunkId;
             executionContext.Chunk.Payload = new byte[chunkSize];
 
-            executionContext.GZipIo.ReadGZip(chunkSize, FinishRead);
+            executionContext.GZipIo.ReadGZip(
+                chunkSize, 
+                asyncResult => _executionSafeContext.ExecuteSafe(() => FinishRead(asyncResult), ErrorAction));
         }
 
         private void FinishRead(IAsyncResult asyncResult)
         {
             var executionContext = asyncResult.AsyncState as IExecutionContext;
             var bytesRead = executionContext.InputStream.EndRead(asyncResult);
-            _compressionSynchronizationContext.OnReadStarted();
+            _compressionSynchronizationContext.OnReadFinished();
 
             var readPayload = executionContext.Chunk.Payload;
             if (bytesRead < executionContext.Chunk.Payload.Length)
@@ -82,13 +90,15 @@ namespace GZipCompressionTool.Core
                 _gZipCompressor.Compress(executionContext.Chunk.Payload) :
                 _gZipCompressor.Decompress(executionContext.Chunk.Payload);
 
-            BeginWrite(executionContext);
+            _executionSafeContext.ExecuteSafe(() => BeginWrite(executionContext), ErrorAction);
         }
 
         private void BeginWrite(IExecutionContext executionContext)
         {
             _compressionSynchronizationContext.OnPreWrite(executionContext.Chunk.Id);
-            executionContext.GZipIo.WriteGZip(executionContext.CompressionMode, FinishWrite);
+            executionContext.GZipIo.WriteGZip(
+                executionContext.CompressionMode, 
+                asyncResult => _executionSafeContext.ExecuteSafe(() => FinishWrite(asyncResult), ErrorAction));
         }
 
         private void FinishWrite(IAsyncResult asyncResult)
@@ -96,7 +106,7 @@ namespace GZipCompressionTool.Core
             var executionContext = asyncResult.AsyncState as IExecutionContext;
             executionContext.OutputStream.EndWrite(asyncResult);
             _compressionSynchronizationContext.OnWriteFinish();
-            BeginReadChunk(executionContext);
+            _executionSafeContext.ExecuteSafe(() => BeginReadChunk(executionContext), ErrorAction);
         }
     }
 }

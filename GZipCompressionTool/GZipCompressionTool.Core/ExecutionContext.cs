@@ -14,7 +14,6 @@ namespace GZipCompressionTool.Core
             CompressionMode = compressionMode;
             GZipIo = new GZipIO();
             GZipIo.SetExecutionContext(this);
-            ExecutionSafeContext = new ExecutionSafeContext();
         }
 
         public Stream InputStream { get; }
@@ -28,7 +27,5 @@ namespace GZipCompressionTool.Core
         public IGZipIO GZipIo { get; set; }
 
         public CompressionMode CompressionMode { get; set; }
-
-        public IExecutionSafeContext ExecutionSafeContext { get; set; }
     }
 }
