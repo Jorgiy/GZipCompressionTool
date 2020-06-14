@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using GZipCompressionTool.Core.Interfaces;
 using GZipCompressionTool.Core.Models;
 using static GZipCompressionTool.Core.Models.Constants;
@@ -9,32 +11,66 @@ namespace GZipCompressionTool.Core
 {
     public class ApplicationSettingsProvider : IApplicationSettingsProvider
     {
-        private readonly List<UserException> _exceptions = new List<UserException>();
+        private List<UserException> _exceptions;
 
         public IEnumerable<UserException> Errors => _exceptions;
 
         public bool TryGetApplicationSettings(string[] args, out ApplicationSettings applicationSettings)
         {
+            _exceptions = new List<UserException>();
+
             if (args.Length < 3)
             {
-                _exceptions.Add(new UserException());
+                _exceptions.Add(new UserException(InsufficientArgumentsErrorMessage));
+                applicationSettings = null;
+                return false;
             }
-            var inputFilePathString = 
-            applicationSettings = 
-            false ? new ApplicationSettings
+
+            var compressModeString = args[0];
+            if (!Enum.TryParse(compressModeString, true, out CompressionMode compressMode))
             {
-                InputFilePath = @"C:\gzip\A.exe",
-                OutputFilePath = @"C:\gzip\A.gz",
-                ChunkSize = ChunkSize,
-                CompressionMode = CompressionMode.Compress,
-                ProcessorsCount =  false ? 1 : Environment.ProcessorCount
-            } : new ApplicationSettings
+                _exceptions.Add(new UserException($"{compressModeString}{CompressModeParsingErrorMessage}"));
+            }
+
+            var inputFileName = args[1];
+            if (!File.Exists(inputFileName))
             {
-                InputFilePath = @"C:\gzip\A.gz",
-                OutputFilePath = @"C:\gzip\A2.exe",
+                _exceptions.Add(new UserException(InPutFileErrorMessage));
+            }
+
+            var outputFileName = args[2];
+            string outputPath;
+            try
+            {
+                outputPath = Path.GetDirectoryName(outputFileName);
+            }
+            catch (ArgumentException)
+            {
+                throw new UserException(InappropriateOutputFilePathError);
+            }
+            catch (PathTooLongException)
+            {
+                throw new UserException(OutputPathTooLong);
+            }
+
+            if (!Directory.Exists(Path.GetDirectoryName(outputPath)))
+            {
+                throw new UserException(OutputDirectoryDoesNotExist);
+            }
+
+            if (_exceptions.Any())
+            {
+                applicationSettings = null;
+                return false;
+            }
+
+            applicationSettings = new ApplicationSettings
+            {
                 ChunkSize = ChunkSize,
-                CompressionMode = CompressionMode.Decompress,
-                ProcessorsCount = false ? 1 : Environment.ProcessorCount
+                CompressionMode = compressMode,
+                InputFileFullName = inputFileName,
+                OutputFileFullName = outputFileName,
+                ProcessorsCount = Environment.ProcessorCount
             };
 
             return true;

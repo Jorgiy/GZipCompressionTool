@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "GZipCompressionTool": {
+      "commandName": "Project",
+      "commandLineArgs": "compress C:\\gzip\\A.gz C:\\gzip\\A.avi "
+    }
+  }
+}

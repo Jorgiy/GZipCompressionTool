@@ -34,7 +34,7 @@ namespace GZipCompressionTool
             
             // application start
             using (var inputFileStream = new FileStream(
-                _applicationSettings.InputFilePath,
+                _applicationSettings.InputFileFullName,
                 FileMode.Open,
                 FileAccess.Read,
                 FileShare.Read,
@@ -42,7 +42,7 @@ namespace GZipCompressionTool
                 FileOptions.Asynchronous))
             {
                 using (var outputFileStream = new FileStream(
-                    _applicationSettings.OutputFilePath,
+                    _applicationSettings.OutputFileFullName,
                     FileMode.CreateNew,
                     FileAccess.Write,
                     FileShare.Write,

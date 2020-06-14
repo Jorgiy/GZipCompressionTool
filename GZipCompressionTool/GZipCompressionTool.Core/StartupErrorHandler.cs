@@ -32,9 +32,9 @@ namespace GZipCompressionTool.Core
                     fileExistedBefore = ioException.HResult == -2147024816 || ioException.HResult == -2147024713;
                 }
 
-                if (!fileExistedBefore && File.Exists(_applicationSettings.OutputFilePath))
+                if (!fileExistedBefore && File.Exists(_applicationSettings.OutputFileFullName))
                 {
-                    File.Delete(_applicationSettings.OutputFilePath);
+                    File.Delete(_applicationSettings.OutputFileFullName);
                 }
 
                 if (exception.GetType() != typeof(CompressFailedException))

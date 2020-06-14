@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO.Compression;
+﻿using System.IO.Compression;
 
 namespace GZipCompressionTool.Core.Models
 {
@@ -7,9 +6,9 @@ namespace GZipCompressionTool.Core.Models
     {
         public CompressionMode CompressionMode { get; set; }
 
-        public string InputFilePath { get; set; }
+        public string InputFileFullName { get; set; }
 
-        public string OutputFilePath { get; set; }
+        public string OutputFileFullName { get; set; }
 
         public int ChunkSize { get; set; }
 
