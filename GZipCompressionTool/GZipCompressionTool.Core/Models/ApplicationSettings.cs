@@ -13,5 +13,7 @@ namespace GZipCompressionTool.Core.Models
         public int ChunkSize { get; set; }
 
         public int ProcessorsCount { get; set; }
+
+        public bool? EnableProgressBar { get; set; }
     }
 }

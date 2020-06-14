@@ -29,12 +29,10 @@ namespace GZipCompressionTool.Core
             {
                 throw new InvalidDataException();
             }
+            
+            chunkSize = BitConverter.ToInt32(chunkSizeBytes, 0);
 
-            try
-            {
-                chunkSize = BitConverter.ToInt32(chunkSizeBytes, 0);
-            }
-            catch (ArgumentException)
+            if (chunkSize < 0)
             {
                 throw new InvalidDataException();
             }

@@ -2,6 +2,6 @@
 {
     public interface IStartup
     {
-        int Run(string[] args);
+        int Run();
     }
 }

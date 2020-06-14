@@ -14,7 +14,8 @@
 
         public const string InvalidDataStreamMessage = "Input file is in incorrect format.";
 
-        public const string InsufficientArgumentsErrorMessage = "Insufficient passed arguments: arguments should be [compress/decompress] [input file name] [output file name]";
+        public const string InsufficientArgumentsErrorMessage = 
+            "Insufficient passed arguments: arguments should be [compress/decompress] [input file name] [output file name] [optional progress bar:enabled/disabled]";
 
         public const string CompressModeParsingErrorMessage = " is not appropriate value for compression mode, please use comrpess or decompress";
 

@@ -2,8 +2,9 @@
 using System.IO;
 using GZipCompressionTool.Core.Interfaces;
 using GZipCompressionTool.Core.Models;
+using log4net;
 
-namespace GZipCompressionTool.Core
+namespace GZipCompressionTool
 {
     public class StartupErrorHandler : IStartup
     {
@@ -11,17 +12,20 @@ namespace GZipCompressionTool.Core
 
         private readonly ApplicationSettings _applicationSettings;
 
-        public StartupErrorHandler(IStartup startup, ApplicationSettings applicationSettings)
+        private readonly ILog _logger;
+
+        public StartupErrorHandler(IStartup startup, ApplicationSettings applicationSettings, ILog logger)
         {
             _startup = startup;
             _applicationSettings = applicationSettings;
+            _logger = logger;
         }
 
-        public int Run(string[] args)
+        public int Run()
         {
             try
             {
-                return _startup.Run(args);
+                return _startup.Run();
             }
             catch (Exception exception)
             {
@@ -39,13 +43,7 @@ namespace GZipCompressionTool.Core
 
                 if (exception.GetType() != typeof(CompressFailedException))
                 {
-                    var consoleColor = Console.ForegroundColor;
-
-                    Console.ForegroundColor = ConsoleColor.Red;
-
-                    Console.Error.WriteLine(exception.Message);
-
-                    Console.ForegroundColor = consoleColor;
+                    _logger.Error(exception.Message);
                 }
 
                 return 1;

@@ -53,15 +53,25 @@ namespace GZipCompressionTool.Core
                 throw new UserException(OutputPathTooLong);
             }
 
-            if (!Directory.Exists(Path.GetDirectoryName(outputPath)))
+            if (outputPath != string.Empty && !Directory.Exists(Path.GetDirectoryName(outputPath)))
             {
                 throw new UserException(OutputDirectoryDoesNotExist);
             }
-
+            
             if (_exceptions.Any())
             {
                 applicationSettings = null;
                 return false;
+            }
+
+            bool? enableProgressBar = null;
+
+            if (args.Length > 3)
+            {
+                if (Enum.TryParse(args[3], true, out ProgressBar progressBarEnabled))
+                {
+                    enableProgressBar = progressBarEnabled == ProgressBar.Enabled;
+                }
             }
 
             applicationSettings = new ApplicationSettings
@@ -70,7 +80,8 @@ namespace GZipCompressionTool.Core
                 CompressionMode = compressMode,
                 InputFileFullName = inputFileName,
                 OutputFileFullName = outputFileName,
-                ProcessorsCount = Environment.ProcessorCount
+                ProcessorsCount = Environment.ProcessorCount,
+                EnableProgressBar = enableProgressBar
             };
 
             return true;

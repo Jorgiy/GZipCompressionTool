@@ -4,6 +4,7 @@ using System.IO;
 using GZipCompressionTool.Core;
 using GZipCompressionTool.Core.Interfaces;
 using GZipCompressionTool.Core.Models;
+using log4net;
 
 namespace GZipCompressionTool
 {
@@ -17,17 +18,21 @@ namespace GZipCompressionTool
 
         private readonly IThreadPoolDispatcher _threadPoolDispatcher = new ThreadPoolDispatcher();
 
+        private readonly ILog _logger;
+
         public Startup(
             ApplicationSettings applicationSettings,
             ICompressionProvider compressionProvider,
-            ICompressionSynchronizationContext compressionSynchronizationContext)
+            ICompressionSynchronizationContext compressionSynchronizationContext,
+            ILog logger)
         {
             _compressionProvider = compressionProvider;
             _compressionSynchronizationContext = compressionSynchronizationContext;
             _applicationSettings = applicationSettings;
+            _logger = logger;
         }
 
-        public int Run(string[] args)
+        public int Run()
         {
             var executionTimer = new Stopwatch();
             executionTimer.Start();
@@ -67,32 +72,37 @@ namespace GZipCompressionTool
                     }
                     
                     // wait for execution
-                    while (!_compressionSynchronizationContext.WaitCompletion(100))
+                    if (_applicationSettings.EnableProgressBar.HasValue &&
+                        !_applicationSettings.EnableProgressBar.Value)
                     {
-                        Console.SetCursorPosition(0, Console.CursorTop);
-                        Console.Write($"Progress: {(inputFileStream.Position * 100 / inputFileStream.Length)} %");
+                        while (
+                            !_compressionSynchronizationContext.WaitCompletion(-1))
+                        {
+                        }
+
+                    }
+                    else
+                    {
+                        while (!_compressionSynchronizationContext.WaitCompletion(100))
+                        {
+                            Console.SetCursorPosition(0, Console.CursorTop);
+                            Console.Write($"Progress: {(inputFileStream.Position * 100 / inputFileStream.Length)} % ");
+                        }
                     }
 
-                    Console.WriteLine();
-
-                    Console.WriteLine($"Completed for {executionTimer.Elapsed}");
-                    
                     executionTimer.Stop();
+
+                    _logger.Info($"Completed for {executionTimer.Elapsed}");
 
                     if (_compressionSynchronizationContext.ExceptionsOccured)
                     {
-                        var consoleColor = Console.ForegroundColor;
-
-                        Console.ForegroundColor = ConsoleColor.Red;
-
-                        Console.WriteLine($"{_applicationSettings.CompressionMode} failed with errors: ");
+                        _logger.Error($"{_applicationSettings.CompressionMode} failed with errors)");
 
                         foreach (var exception in _compressionSynchronizationContext.GetExceptions)
                         {
-                            Console.WriteLine(exception.Message);
+                            Console.WriteLine();
+                            _logger.Error(exception.Message);
                         }
-
-                        Console.ForegroundColor = consoleColor;
 
                         throw new CompressFailedException();
                     }

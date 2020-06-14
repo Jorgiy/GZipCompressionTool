@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "GZipCompressionTool": {
+    "GZipCompressionTool.Core": {
       "commandName": "Project",
       "commandLineArgs": "compress C:\\gzip\\A.avi C:\\gzip\\A.gz"
     }

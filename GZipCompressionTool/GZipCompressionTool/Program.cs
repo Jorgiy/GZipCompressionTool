@@ -1,12 +1,21 @@
 ﻿using System;
+using System.IO;
+using System.Reflection;
 using GZipCompressionTool.Core;
+using log4net;
+using log4net.Config;
 
 namespace GZipCompressionTool
 {
-    class Program
+    public class Program
     {
-        static int Main(string[] args)
+        public static ILog Logger = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+
+        public static int Main(string[] args)
         {
+            var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
+            XmlConfigurator.Configure(logRepository, new FileInfo("log4net.config"));
+
             // composition root
             var applicationSettingsProvider = new ApplicationSettingsProvider();
             
@@ -30,11 +39,11 @@ namespace GZipCompressionTool
             var synchronizationContext = new CompressionSynchronizationContext(applicationSettings.ProcessorsCount);
             var executionSafeContext = new ExecutionSafeContext(synchronizationContext);
             var compressionProvider = new CompressionProvider(gZipCompressor, synchronizationContext, executionSafeContext);
-            var startup = new Startup(applicationSettings, compressionProvider, synchronizationContext);
-            var startupErrorHandler = new StartupErrorHandler(startup, applicationSettings);
+            var startup = new Startup(applicationSettings, compressionProvider, synchronizationContext, Logger);
+            var startupErrorHandler = new StartupErrorHandler(startup, applicationSettings, Logger);
 
             // run
-            return startupErrorHandler.Run(args);
+            return startupErrorHandler.Run();
         }
     }
 }
