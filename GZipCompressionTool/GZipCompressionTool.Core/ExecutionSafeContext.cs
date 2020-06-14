@@ -2,6 +2,7 @@
 using System.IO;
 using GZipCompressionTool.Core.Interfaces;
 using GZipCompressionTool.Core.Models;
+using static GZipCompressionTool.Core.Models.Constants;
 
 namespace GZipCompressionTool.Core
 {
@@ -14,7 +15,7 @@ namespace GZipCompressionTool.Core
             _compressionSynchronizationContext = compressionSynchronizationContext;
         }
 
-        public void ExecuteSafe(Action action, Action<Exception> errorAction)
+        public void ExecuteSafe(Action action, Action<UserException> errorAction)
         {
             try
             {
@@ -32,11 +33,22 @@ namespace GZipCompressionTool.Core
             }
             catch (IOException ioException)
             {
-                errorAction?.Invoke(new UserException("", ioException));
+                const int hrErrorHandleDiskFull = unchecked((int) 0x80070027);
+                const int hrErrorDiskFull = unchecked((int) 0x80070070);
+
+                var errorText = ioException.HResult == hrErrorHandleDiskFull || ioException.HResult == hrErrorDiskFull
+                    ? "not enough space"
+                    : string.Empty;
+
+                errorAction?.Invoke(new UserException(IoErrorMessage + errorText + $"({ioException.Message})"));
+            }
+            catch (InvalidDataException)
+            {
+                errorAction?.Invoke(new UserException(InvalidDataStreamMessage));
             }
             catch (Exception exception)
             {
-                errorAction?.Invoke(new UserException("", exception));
+                errorAction?.Invoke(new UserException(OtherErrorsMessage + exception.Message));
             }
         }
     }

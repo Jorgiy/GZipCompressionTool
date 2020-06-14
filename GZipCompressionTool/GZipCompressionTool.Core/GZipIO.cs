@@ -1,6 +1,8 @@
 ﻿using GZipCompressionTool.Core.Interfaces;
 using System;
+using System.IO;
 using System.IO.Compression;
+using static GZipCompressionTool.Core.Models.Constants;
 
 namespace GZipCompressionTool.Core
 {
@@ -18,9 +20,26 @@ namespace GZipCompressionTool.Core
             return _executionContext.InputStream.BeginRead(_executionContext.Chunk.Payload, 0, bufferSize, asyncCallback, _executionContext);
         }
 
-        public int GetCompressedChunkSize(int headerSize, byte[] chunkSize)
+        public int GetCompressedChunkSize(int headerSize, out int chunkSize)
         {
-            return _executionContext.InputStream.Read(chunkSize, 0, headerSize);
+            var chunkSizeBytes = new byte[ChunkHeaderSize];
+            var bytesRead = _executionContext.InputStream.Read(chunkSizeBytes, 0, headerSize);
+
+            if (bytesRead > 0 && bytesRead < ChunkHeaderSize)
+            {
+                throw new InvalidDataException();
+            }
+
+            try
+            {
+                chunkSize = BitConverter.ToInt32(chunkSizeBytes, 0);
+            }
+            catch (ArgumentException)
+            {
+                throw new InvalidDataException();
+            }
+
+            return bytesRead;
         }
 
         public void WriteGZip(CompressionMode compressionMode, AsyncCallback asyncCallback)

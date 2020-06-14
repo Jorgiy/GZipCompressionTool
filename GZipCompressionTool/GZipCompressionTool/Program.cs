@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Diagnostics;
 using GZipCompressionTool.Core;
-using GZipCompressionTool.Core.Models;
-using System.IO;
 
 namespace GZipCompressionTool
 {
@@ -11,55 +8,33 @@ namespace GZipCompressionTool
         static int Main(string[] args)
         {
             // composition root
-            var applicationSettings = new ApplicationSettingsProvider().GetApplicationSettings(args);
+            var applicationSettingsProvider = new ApplicationSettingsProvider();
+            
+            if (!applicationSettingsProvider.TryGetApplicationSettings(args, out var applicationSettings))
+            {
+                var consoleColor = Console.ForegroundColor;
+
+                Console.ForegroundColor = ConsoleColor.Red;
+
+                foreach (var exception in applicationSettingsProvider.Errors)
+                {
+                    Console.WriteLine(exception.Message);
+                }
+
+                Console.ForegroundColor = consoleColor;
+
+                return 1;
+            }
+
             var gZipCompressor = new GZipCompressor();
             var synchronizationContext = new CompressionSynchronizationContext(applicationSettings.ProcessorsCount);
             var executionSafeContext = new ExecutionSafeContext(synchronizationContext);
             var compressionProvider = new CompressionProvider(gZipCompressor, synchronizationContext, executionSafeContext);
-            var threadPoolDispatcher = new ThreadPoolDispatcher();
+            var startup = new Startup(applicationSettings, compressionProvider, synchronizationContext);
+            var startupErrorHandler = new StartupErrorHandler(startup, applicationSettings);
 
-            var stopWatch = new Stopwatch();
-            stopWatch.Start();
-
-            // application start
-            using (var inputFileStream = new FileStream(
-                applicationSettings.InputFilePath,
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.Read,
-                applicationSettings.ChunkSize,
-                FileOptions.Asynchronous))
-            {
-                using (var outputFileStream = new FileStream(
-                    applicationSettings.OutputFilePath,
-                    FileMode.Create,
-                    FileAccess.Write,
-                    FileShare.Write,
-                    applicationSettings.ChunkSize,
-                    FileOptions.Asynchronous))
-                {
-                    var threadsEnumerable = threadPoolDispatcher.GetThreads(
-                        applicationSettings.ProcessorsCount, 
-                        () => { compressionProvider.Execute(
-                            inputFileStream, outputFileStream, 
-                            new CompressionOptions { 
-                                CompressionMode = applicationSettings.CompressionMode, 
-                                ReadBufferSize = applicationSettings.ChunkSize }); 
-                        });
-
-                    foreach(var thread in threadsEnumerable)
-                    {
-                        thread.Start();
-                    }
-
-                    // wait for execution
-                    synchronizationContext.WaitCompletion();
-                    stopWatch.Stop();
-                    Console.WriteLine(stopWatch.Elapsed);
-                }
-            }
-
-            return 1;
+            // run
+            return startupErrorHandler.Run(args);
         }
     }
 }

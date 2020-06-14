@@ -29,7 +29,7 @@ namespace GZipCompressionTool.Core
 
         private int _chunksToWriteCount;
 
-        public ICollection<Exception> Exceptions { get; } = new List<Exception>();
+        public ICollection<UserException> Exceptions { get; } = new List<UserException>();
 
         public long GetChunkId()
         {
@@ -82,7 +82,7 @@ namespace GZipCompressionTool.Core
             }
         }
 
-        public void OnException(Exception exception)
+        public void OnException(UserException exception)
         {
             Exceptions.Add(exception);
             _errorHandle.Set();
@@ -92,17 +92,12 @@ namespace GZipCompressionTool.Core
 
         public bool ExceptionsOccured => _errorHandle.WaitOne(0);
 
-        public void WaitCompletion()
-        {
-            _allChunksAreReadHandle.WaitOne();
+        public IEnumerable<UserException> GetExceptions => Exceptions;
 
-            while (_chunksToWriteCount != _nextToWriteChunkId - 1)
-            {
-                if (_errorHandle.WaitOne(100) && _chunksToWriteCount == _nextToWriteChunkId)
-                {
-                    return;
-                }
-            }
+        public bool WaitCompletion(int milliseconds)
+        {
+            return (_allChunksAreReadHandle.WaitOne(milliseconds) && _chunksToWriteCount == _nextToWriteChunkId - 1) ||
+                   (_errorHandle.WaitOne(milliseconds) && _chunksToWriteCount == _nextToWriteChunkId);
         }
 
         private void AbortCompress()

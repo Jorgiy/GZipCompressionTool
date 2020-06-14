@@ -15,7 +15,7 @@ namespace GZipCompressionTool.Core
 
         private readonly IExecutionSafeContext _executionSafeContext;
 
-        private Action<Exception> ErrorAction => _compressionSynchronizationContext.OnException;
+        private Action<UserException> ErrorAction => _compressionSynchronizationContext.OnException;
 
         public CompressionProvider(
             IGZipCompressor gZipCompressor,
@@ -48,16 +48,13 @@ namespace GZipCompressionTool.Core
 
             if (executionContext.CompressionMode == CompressionMode.Decompress)
             {
-                var chunkSizeBuffer = new byte[ChunkHeaderSize];
-                var bufferSizeBytesRead = executionContext.GZipIo.GetCompressedChunkSize(ChunkHeaderSize, chunkSizeBuffer);
+                var bufferSizeBytesRead = executionContext.GZipIo.GetCompressedChunkSize(ChunkHeaderSize, out chunkSize);
                 if (bufferSizeBytesRead == 0)
                 {
                     _compressionSynchronizationContext.OnThreadFinish();
                     executionContext.Dispose();
                     return;
                 }
-
-                chunkSize = BitConverter.ToInt32(chunkSizeBuffer, 0);
             }
 
             executionContext.Chunk.Id = chunkId;

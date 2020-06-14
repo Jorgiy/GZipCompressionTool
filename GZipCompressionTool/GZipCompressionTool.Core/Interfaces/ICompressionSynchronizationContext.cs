@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using GZipCompressionTool.Core.Models;
 
 namespace GZipCompressionTool.Core.Interfaces
 {
@@ -14,10 +16,12 @@ namespace GZipCompressionTool.Core.Interfaces
 
         void OnThreadFinish();
 
-        void OnException(Exception exception);
+        void OnException(UserException exception);
 
         bool ExceptionsOccured { get; }
 
-        void WaitCompletion();
+        IEnumerable<UserException> GetExceptions { get; }
+
+        bool WaitCompletion(int milliseconds);
     }
 }

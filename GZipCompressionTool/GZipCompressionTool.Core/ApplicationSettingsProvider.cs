@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO.Compression;
 using GZipCompressionTool.Core.Interfaces;
 using GZipCompressionTool.Core.Models;
@@ -8,9 +9,19 @@ namespace GZipCompressionTool.Core
 {
     public class ApplicationSettingsProvider : IApplicationSettingsProvider
     {
-        public ApplicationSettings GetApplicationSettings(string[] args)
+        private readonly List<UserException> _exceptions = new List<UserException>();
+
+        public IEnumerable<UserException> Errors => _exceptions;
+
+        public bool TryGetApplicationSettings(string[] args, out ApplicationSettings applicationSettings)
         {
-            return false ? new ApplicationSettings
+            if (args.Length < 3)
+            {
+                _exceptions.Add(new UserException());
+            }
+            var inputFilePathString = 
+            applicationSettings = 
+            false ? new ApplicationSettings
             {
                 InputFilePath = @"C:\gzip\A.exe",
                 OutputFilePath = @"C:\gzip\A.gz",
@@ -25,6 +36,8 @@ namespace GZipCompressionTool.Core
                 CompressionMode = CompressionMode.Decompress,
                 ProcessorsCount = false ? 1 : Environment.ProcessorCount
             };
+
+            return true;
         }
     }
 }
