@@ -3,6 +3,7 @@ using System.IO;
 using GZipCompressionTool.Core.Interfaces;
 using GZipCompressionTool.Core.Models;
 using log4net;
+using static GZipCompressionTool.Core.Models.Constants;
 
 namespace GZipCompressionTool
 {
@@ -33,7 +34,7 @@ namespace GZipCompressionTool
 
                 if (exception is IOException ioException)
                 {
-                    fileExistedBefore = ioException.HResult == -2147024816 || ioException.HResult == -2147024713;
+                    fileExistedBefore = ioException.HResult == HrFileExists || ioException.HResult == HrFileExistsSecondCode;
                 }
 
                 if (!fileExistedBefore && File.Exists(_applicationSettings.OutputFileFullName))

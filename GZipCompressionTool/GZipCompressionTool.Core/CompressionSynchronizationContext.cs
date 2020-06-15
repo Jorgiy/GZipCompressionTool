@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using GZipCompressionTool.Core.Interfaces;
 using System.Threading;
 using GZipCompressionTool.Core.Models;

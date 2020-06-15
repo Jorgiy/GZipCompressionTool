@@ -33,10 +33,7 @@ namespace GZipCompressionTool.Core
             }
             catch (IOException ioException)
             {
-                const int hrErrorHandleDiskFull = unchecked((int) 0x80070027);
-                const int hrErrorDiskFull = unchecked((int) 0x80070070);
-
-                var errorText = ioException.HResult == hrErrorHandleDiskFull || ioException.HResult == hrErrorDiskFull
+                var errorText = ioException.HResult == HrErrorHandleDiskFull || ioException.HResult == HrErrorDiskFull
                     ? "not enough space"
                     : string.Empty;
 

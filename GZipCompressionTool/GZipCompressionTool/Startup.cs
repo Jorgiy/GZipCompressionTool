@@ -5,6 +5,7 @@ using GZipCompressionTool.Core;
 using GZipCompressionTool.Core.Interfaces;
 using GZipCompressionTool.Core.Models;
 using log4net;
+using static GZipCompressionTool.Core.Models.Constants;
 
 namespace GZipCompressionTool
 {
@@ -54,8 +55,18 @@ namespace GZipCompressionTool
                     _applicationSettings.ChunkSize,
                     FileOptions.Asynchronous))
                 {
+                    var chunksInFileCount = inputFileStream.Length / ChunkSize == 0 ? 1 : inputFileStream.Length / ChunkSize;
+                    var threadsCount = chunksInFileCount < _applicationSettings.ProcessorsCount
+                        ? chunksInFileCount
+                        : _applicationSettings.ProcessorsCount;
+
+                    if (threadsCount > int.MaxValue)
+                    {
+                        threadsCount = int.MaxValue;
+                    }
+
                     var threadsEnumerable = _threadPoolDispatcher.GetThreads(
-                        _applicationSettings.ProcessorsCount,
+                        (int)threadsCount,
                         () => {
                             _compressionProvider.Execute(
                                 inputFileStream, outputFileStream,
@@ -88,6 +99,9 @@ namespace GZipCompressionTool
                             Console.SetCursorPosition(0, Console.CursorTop);
                             Console.Write($"Progress: {(inputFileStream.Position * 100 / inputFileStream.Length)} % ");
                         }
+
+                        Console.SetCursorPosition(0, Console.CursorTop);
+                        Console.Write("Progress: 100 % ");
                     }
 
                     executionTimer.Stop();

@@ -26,5 +26,13 @@
         public const string OutputPathTooLong = "Output file path is too long";
 
         public const string OutputDirectoryDoesNotExist = "Output directory does not exist";
+
+        public const int HrErrorHandleDiskFull = unchecked((int)0x80070027);
+
+        public const int HrErrorDiskFull = unchecked((int)0x80070070);
+
+        public const int HrFileExists = -2147024816;
+
+        public const int HrFileExistsSecondCode = -2147024713;
     }
 }
